@@ -39,21 +39,18 @@
 #endif
 /************************************/
 
-/*
- * BLADE TYPE
- *
- * RGB LED OR PIXELBLADE users:
- * Comment the following line will
- * disable and remove all LEDSTRINGS
- * blocks from compile
- *************************************/
+// ==============================================================================
+// ===                          BLADE TYPE SETTINGS                           ===
+// ==============================================================================
+/*****************************************
+ * Define only the blade type to be used *
+ *****************************************/
 //#define LEDSTRINGS
-#define STAR_LED
-//#define PIXELBLADE
+//#define STAR_LED
+#define PIXELBLADE
 
 /************************************/
-/*
- * SABER TYPE
+/* SABER TYPE
  * currently in v1.3 only the CROSSGUARDSABER
  * will have any effect on the code
  * due to the fire blade effect
@@ -62,19 +59,28 @@
 //#define SABERSTAFF  // i.e. Darth Maul saber with dual blades
 //#define CROSSGUARDSABER  // i.e. Kylo Ren saber
 
-/*
- * DEFAULT CONFIG PARAMETERS
+/* DEFAULT CONFIG PARAMETERS
  * Will be overriden by EEPROM settings
- * once the first save will be done
+ * once the first initialization is completed
  *************************************/
-#define VOL          20    //0-30
-#define SOUNDFONT       3
-#define SWING         1000 //default 1000
-#define CLASH_THRESHOLD 10 //default 10
-/************************************/
+#define VOL               20    //0-30
+#define SOUNDFONT         3
+#define SWING             1000 //default 1000
+#define CLASH_THRESHOLD   10 //default 10
 
-/*
- * DO NOT MODIFY
+/* MAX_BRIGHTNESS
+ *
+ * Maximum output of STAR_LED and PIXELBLADE
+ * Default = 100 (39,2%) Max=255 Min=0(Off)
+ *
+ * WARNING ! A too high value may burn
+ * your leds. Please make your maths !
+ * BE VERY CAREFULL WITH THIS ONE OR 
+ * YOU'LL BURN YOUR BLADE'S LED 
+ ************************************/
+#define MAX_BRIGHTNESS        200
+
+/* DO NOT MODIFY
  * Unless you know what you're doing
  *************************************/
 #if defined LEDSTRINGS
@@ -86,13 +92,15 @@
 #if defined PIXELBLADE
 #define CONFIG_VERSION     "L03"
 #endif
-#define MEMORYBASE       32
-
+#define MEMORYBASE          32
 /************************************/
 
+// ==============================================================================
+// ===                         BUTTON CONFIGURATION                           ===
+// ==============================================================================
 
-/* Set for single button or two button configuration */
-//#define SINGLEBUTTON
+/* Set for single button or comment two button configuration */
+#define SINGLEBUTTON
 
 // ==============================================================================
 // ===                         PIXEL BLADE SETTINGS                           ===
@@ -101,7 +109,7 @@
 #if defined PIXELBLADE
 
 // How many leds in one strip?
-#define NUMPIXELS 120  // can go up to 120, could lead to memory problems if further increased
+#define NUMPIXELS 118  // can go up to 120, could lead to memory problems if further increased
 
 #ifdef CROSSGUARDSABER
 // define how many pixels are used for the crossguard and how many for the main blade
@@ -131,34 +139,20 @@ static const uint8_t rgbFactor = 100;
  * Default: 48
  */
 //#define COLORS		 		14
-#endif
+#endif  // BLADE TYPE
 
-/************************************/ // BLADE TYPE
-
-
-
-
-
-/* MAX_BRIGHTNESS
- *
- * Maximum output voltage to apply to LEDS
- * Default = 100 (39,2%) Max=255 Min=0(Off)
- *
- * WARNING ! A too high value may burn
- * your leds. Please make your maths !
- * BE VERY CAREFULL WITH THIS ONE OR 
- * YOU'LL BURN YOUR BLADE'S LED 
- ************************************/
-#define MAX_BRIGHTNESS		200
+// ==============================================================================
+// ===                           EFFECT SETTINGS                              ===
+// ==============================================================================
 
 // How long do the light effect last for the different FX's
-#define CLASH_FX_DURATION 200
-#define BLASTER_FX_DURATION 150
-#define SWING_FX_DURATION 400
+#define CLASH_FX_DURATION     200
+#define BLASTER_FX_DURATION   150
+#define SWING_FX_DURATION     400
 
 
-#define BLASTER_FLASH_TIME  3
-#define CLASH_FLASH_TIME  	1
+#define BLASTER_FLASH_TIME    3
+#define CLASH_FLASH_TIME  	  1
 
 /* FX DURATIONS AND SUPRESS TIMES
  *  effects cannot be retriggered for the duration
@@ -166,10 +160,10 @@ static const uint8_t rgbFactor = 100;
  *  HUM_RELAUNCH will tell the state machine to relaunch
  *  hum sound after this time period elapses
  */
-#define SWING_SUPPRESS     500
-#define CLASH_SUPRESS     400  // do not modify below 400, otherwise interlocking clash sounds can occur
-#define BLASTERBLOCK_SUPRESS     100
-#define HUM_RELAUNCH     5000
+#define SWING_SUPPRESS          500
+#define CLASH_SUPRESS           400  // do not modify below 400, otherwise interlocking clash sounds can occur
+#define BLASTERBLOCK_SUPRESS    100
+#define HUM_RELAUNCH            5000
 
 /* BLASTER DEFLECT TYPE
  * Define how a blaser bolt deflect is
@@ -207,7 +201,7 @@ static const uint8_t rgbFactor = 100;
  *************************************/
 #define DEEP_SLEEP
 #if defined DEEP_SLEEP
-#define SLEEP_TIMER			20000 //20 secs
+#define SLEEP_TIMER		360000	// sleep after 5 minutes standby, comment for no automatic sleep
 
 #endif  // DEEP_SLEEP
 
@@ -222,7 +216,7 @@ static const uint8_t rgbFactor = 100;
   #define LS4 			9  //9
   #define LS5 			10  //10
   #define LS6 			11 //11
-  /*   CLASH STRING
+  /*********   CLASH STRING   **********
    * Enable/disable management of
    * single clash ledstring
    *************************************/
@@ -274,50 +268,46 @@ static const uint8_t rgbFactor = 100;
 
 
 #ifdef DIYINO_PRIME 
-  #define MAIN_BUTTON     4
-  #define LOCKUP_BUTTON   12
+  #define MAIN_BUTTON     12
+  #define LOCKUP_BUTTON   4
 #else if DIYINO_STARDUST
   #define MAIN_BUTTON     12
   #define LOCKUP_BUTTON   2
 #endif
 
-#define BUTTONLEDPIN    16 //A2 This LED indicated DIYino functions
-
-/*
- * ACCENT_LED
- * Enable/disable management of
- * a button accent led
+/***********  Accent LEDs  ***********
  *
- * If you define ACCENT_LED beware on which
- * kind of pin you defined it :
- * D3,D5,D6,D9,D10,D11 are hardware PWM
- * others must use software PWM
+ * Enable use of single LED accent or
+ * WS2812 compatible accent.
  *
- * RGB LEDS user should choose tu plu their
- * Accent leds on Hardware PWM pin
+ * PIXEL_ACCENT and ACCENT_LED cannnot 
+ * be used at the same time unless they
+ * use different pins.
+ * 
+ * Pixel accents will use additional RAM
  *
- * LEDSTRINGS users have no choice :
- * your forced to use Software Accent LED
  *************************************/
-#define ACCENT_LED      14 //A0
+#define PIXEL_ACCENT
+#define PIXEL_ACCENT_DATA 14 //A0
+#define ACCENT_NUMPIXELS  1
+
+//#define ACCENT_LED      14 //A0
 #if defined ACCENT_LED
-/*
- * Soft or Had PWM for Accent
- */
-//#define SOFT_ACCENT //this doesn't work
-#if not defined SOFT_ACCENT
-#define HARD_ACCENT
-#endif
+/* Soft or Had PWM for Accent */
+  //#define SOFT_ACCENT //this doesn't work
+  #if not defined SOFT_ACCENT
+  #define HARD_ACCENT
+  #endif
 #endif //ACCENT_LED
 
 // ==============================================================================
 // ===                      BATTERY CHECK CONFIGURATION                       ===
 // ==============================================================================
 #define BATTERY_CHECK           // comment to disable
-#define BATTERY_FACTOR    6.26  // Callibration value to compensate for component variation
+#define BATTERY_FACTOR    6.34  // Callibration value to compensate for component variation
 #define BATTERY_READPIN   17    //A3 - read battery level 100kohm from GND, 470kohm from Bat+
-#define LOW_BATTERY       3.3   // low voltage for battery, a 5v Arduino or DIYino requires 3.3v 
-#define FULL_BATTERY      4.15  // full voltage for battery, nominally 4.2 for a 3.7v battery
+#define LOW_BATTERY       3.4   // low voltage for battery, a 5v Arduino or DIYino requires 3.3v 
+#define FULL_BATTERY      4.10  // full voltage for battery, nominally 4.2 for a 3.7v battery
 
 // ==============================================================================
 // ===                        CONFIG MENU PARAMETERS                          ===
@@ -371,8 +361,4 @@ static const uint8_t rgbFactor = 100;
 //#define LS_CLASH_HEAVY_DEBUG
 #endif
 
-
-
-
 #endif /* CONFIG_H_ */
-

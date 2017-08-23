@@ -10,7 +10,7 @@
 #include "Light.h"
 #include "Config.h"
 
-#if defined PIXELBLADE
+#if defined(PIXELBLADE) or defined(PIXEL_ACCENT)
 #include <WS2812.h>
 #endif
 
@@ -577,6 +577,9 @@ void JukeBox_Stroboscope() {
 static uint8_t flickerPos = 0;
 static long lastFlicker = millis();
 extern WS2812 pixels;
+extern WS2812 pixelAccent;
+
+cRGB accentColor;
 
 extern cRGB currentColor;
 
@@ -828,6 +831,7 @@ void lightBlasterEffect(uint8_t pixel, uint8_t range, cRGB SndFnt_MainColor) {
       }
   	}
   	pixels.sync();
+    pixelAccentUpdate(currentColor);
     delay(BLASTER_FX_DURATION/(2*range));  // blast deflect should last for ~500ms
   }
 }
@@ -904,6 +908,7 @@ void lightFlicker(uint8_t value,uint8_t AState) {
   for (uint16_t i = 0; i <= NUMPIXELS; i++) {
       pixels.set_crgb_at(i, color); 
   }
+//  pixelAccentUpdate(color);
 	pixels.sync();
 
 //		break;
@@ -1107,7 +1112,13 @@ void RampPixels(uint16_t RampDuration, bool DirectionUpDown) {
       //generate a flicker effect between 65% and 115% of MAX_BRIGHTNESS, with a 1 in 115 chance of flicking to 0
       int flickFactor = random(0,115);
       if (flickFactor < 65 && flickFactor > 0) { flickFactor = 100; } 
-     for(uint8_t  j=0; j<NUMPIXELS; j++ ) { // fill up string with data
+     for(uint8_t  j=0; j<20; j++ ) {
+        value.r = MAX_BRIGHTNESS * currentColor.r / rgbFactor + (50 * (NUMPIXELS - i) / NUMPIXELS);
+        value.g = MAX_BRIGHTNESS * currentColor.g / rgbFactor + (50 * (NUMPIXELS - i) / NUMPIXELS);
+        value.b = MAX_BRIGHTNESS * currentColor.b / rgbFactor + (50 * (NUMPIXELS - i) / NUMPIXELS);
+        pixels.set_crgb_at(j, value);
+     }
+     for(uint8_t  j=20; j<NUMPIXELS; j++ ) { // fill up string with data
       if ((DirectionUpDown and j<=i)){
         value.r = MAX_BRIGHTNESS * i / NUMPIXELS * currentColor.r / rgbFactor * flickFactor / 100;
         value.g = MAX_BRIGHTNESS * i / NUMPIXELS * currentColor.g / rgbFactor * flickFactor / 100;
@@ -1395,23 +1406,28 @@ void BladeMeter (int meterLevel) {  //expects input of 0-100
 #ifdef PIXELBLADE // light blade as 3 color meter proportionate to length
   cRGB value;
   //set first pixel for accent LED compatability
-  if (meterLevel < 30) {
-    value.r = MAX_BRIGHTNESS/2;
-    value.g = 0;
-    value.b = 0;
-  } else if (meterLevel < 60) {
-    value.r = MAX_BRIGHTNESS/2*0.8;
-    value.g = MAX_BRIGHTNESS/2*0.6;
-    value.b = 0;
-  } else {
-    value.r = 0;
-    value.g = MAX_BRIGHTNESS/2;
-    value.b = 0;
-  }
+//  if (meterLevel < 30) {
+//    value.r = MAX_BRIGHTNESS/2;
+//    value.g = 0;
+//    value.b = 0;
+//  } else if (meterLevel < 60) {
+//    value.r = MAX_BRIGHTNESS/2*0.8;
+//    value.g = MAX_BRIGHTNESS/2*0.6;
+//    value.b = 0;
+//  } else {
+//    value.r = 0;
+//    value.g = MAX_BRIGHTNESS/2;
+//    value.b = 0;
+//  }
+  value.r = 255 * (100 - meterLevel) / 100;
+  value.g = 255 * meterLevel / 100;
+  value.b = 0;
+  Serial.print(value.r); Serial.print(" | "); Serial.print(value.g); Serial.print(" | "); Serial.println(value.b); 
+  pixelAccentUpdate(value);
   pixels.set_crgb_at(0, value);
-
+  pixels.sync(); 
   //set rest of blade
-  for (unsigned int i = 1; i < NUMPIXELS; i++) { // turn on/off one LED at a time
+  for (unsigned int i = 1; i < NUMPIXELS; i++) {
       if (i < NUMPIXELS * meterLevel / 100){
         if (i < (30 * NUMPIXELS / 100)) {
           value.r = MAX_BRIGHTNESS;
@@ -1438,3 +1454,13 @@ void BladeMeter (int meterLevel) {  //expects input of 0-100
 #endif
 }
 
+
+
+void pixelAccentUpdate (cRGB thisAccentColor) {
+  accentColor.r = thisAccentColor.g;
+  accentColor.g = thisAccentColor.r;
+  accentColor.b = thisAccentColor.b;
+  pixelAccent.set_crgb_at(0, accentColor);
+  pixelAccent.sync();
+  Serial.println("k");
+}

@@ -21,8 +21,8 @@
 #ifdef OLD_DPFPLAYER_LIB
 #include <SoftwareSerial.h> // interestingly the DFPlayer lib refuses
 #include "DFPlayer_Mini_Mp3.h"
-//SoftwareSerial mp3player(DFPLAYER_TX, DFPLAYER_RX); // TX, RX
-SoftwareSerial mp3player(7, 8); // TX, RX
+SoftwareSerial mp3player(DFPLAYER_TX, DFPLAYER_RX); // TX, RX
+//SoftwareSerial mp3player(7, 8); // TX, RX
 #else
 #include <DFPlayer.h>
 DFPlayer dfplayer;
@@ -53,6 +53,9 @@ DFPlayer dfplayer;
   #include <avr/sleep.h>
   #include <avr/power.h>
 #endif // DEEP_SLEEP
+
+unsigned long StandbyTime = 0;
+unsigned long AccentBlink = 0;
 
 SoundFont soundFont;
 unsigned long sndSuppress = millis();
@@ -127,6 +130,8 @@ cRGB color;
 cRGB currentColor;
 uint8_t blasterPixel;
 #endif
+
+WS2812 pixelAccent(1);
 
 uint8_t blaster = 0;
 //bool blasterBlocks = false;
@@ -458,6 +463,9 @@ void setup() {
   pixelblade_KillKey_Enable();
 #endif
 
+pixelAccent.setOutput(PIXEL_ACCENT_DATA);
+pixelAccentUpdate(currentColor);
+
 #if defined CLASHSTRING
   pinMode(CLASHSTRING, OUTPUT);
   FoCOff(CLASHSTRING);
@@ -510,10 +518,20 @@ void setup() {
   }
 
   while (digitalRead(MAIN_BUTTON) == LOW ) {
-    digitalWrite(BUTTONLEDPIN, HIGH);
-    delay(100);
-    digitalWrite(BUTTONLEDPIN, LOW);
-    delay(100);
+    #ifdef ACCENT_LED 
+      digitalWrite(ACCENT_LED, HIGH);
+      delay(100);
+      digitalWrite(ACCENT_LED, LOW);
+      pixelAccentUpdate(currentColor);
+      delay(100);
+    #endif
+    #ifdef PIXEL_ACCENT
+      color.r = 0; color.g=0; color.b=0;
+      pixelAccentUpdate(color);
+      delay(100);
+      pixelAccentUpdate(currentColor);
+      delay(100);
+    #endif
   }
 
   /***** DF PLAYER INITIALISATION  *****/
@@ -522,7 +540,8 @@ void setup() {
   delay(200);
   pinMode(SPK1, INPUT);
   pinMode(SPK2, INPUT);
-  SinglePlay_Sound(11);
+//  SinglePlay_Sound(11);
+  SinglePlay_Sound(soundFont.getBoot());
   delay(20);
 
 #ifdef DEEP_SLEEP
@@ -547,17 +566,28 @@ void setup() {
 // ===               	   			LOOP ROUTINE  	 	                			===
 // ====================================================================================
 void loop() {
-
   // if MPU6050 DMP programming failed, don't try to do anything : EPIC FAIL !
   if (!dmpReady) {
     return;
   }
+
+if (ActionModeSubStates ==  AS_BLASTERDEFLECTMOTION && (millis() - AccentBlink) < 300) {
+  pixelAccentUpdate(storage.sndProfile[storage.soundFont].blasterboltColor);
+} else if ((ActionModeSubStates !=  AS_BLASTERDEFLECTMOTION && lockuponclash && (millis() - AccentBlink) < 300) || (lockuponclash && (millis() - AccentBlink) < 600) ) {
+  pixelAccentUpdate(storage.sndProfile[storage.soundFont].clashColor);
+} else if ( SaberState == S_STANDBY) {
+  pixelAccentUpdate(currentColor);
+} else if ( SaberState == S_SABERON) {
+  pixelAccentUpdate(currentColor);
+  if ((millis() - AccentBlink) > 1000) AccentBlink = millis();
+}
 
   mainButton.tick();
 #ifndef SINGLEBUTTON
   lockupButton.tick();
 #endif
 
+  
   /*//////////////////////////////////////////////////////////////////////////////////////////////////////////
      ACTION MODE HANDLER
   */ /////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -668,6 +698,7 @@ void loop() {
              THIS IS A CLASH  !
           */
           ActionModeSubStates = AS_CLASH;
+          pixelAccentUpdate(storage.sndProfile[storage.soundFont].clashColor);
 #if defined STAR_LED
           getColor(storage.sndProfile[storage.soundFont].clashColor);
           lightOn(ledPins, currentColor);
@@ -938,7 +969,9 @@ void loop() {
         ActionModeSubStates = AS_HUM;
       }
       else if (ActionModeSubStates == AS_BLASTERDEFLECTMOTION) {
-        accentLEDControl(AL_PULSE);
+        #ifdef ACCENT_LED
+          accentLEDControl(AL_PULSE);
+        #endif
       }
       // relaunch hum if more than HUM_RELAUNCH time elapsed since entering AS_HUM state
       if (millis() - sndSuppress > HUM_RELAUNCH and not hum_playing and ActionModeSubStates != AS_BLADELOCKUP) {
@@ -958,7 +991,9 @@ void loop() {
       lightFlicker(0, ActionModeSubStates);
 #endif
       if (lockuponclash) {
-        accentLEDControl(AL_PULSE);
+        #ifdef ACCENT_LED
+          accentLEDControl(AL_PULSE);
+        #endif
       }
     }
     // ************************* blade movement detection ends***********************************
@@ -987,7 +1022,7 @@ void loop() {
       ConfigModeSubStates = CS_BATTERYLEVEL;
       //      int batLevel = 100 * (1 / batCheck() - 1 / LOW_BATTERY) / (1 / FULL_BATTERY - 1 / LOW_BATTERY);
       int batLevel = 100 * ((batCheck() - LOW_BATTERY) / (FULL_BATTERY - LOW_BATTERY));
-      Serial.println(batLevel);
+//      Serial.println(batLevel);
       if (batLevel > 95) {        //full
         SinglePlay_Sound(19);
       } else if (batLevel > 60) { //nominal
@@ -1034,6 +1069,7 @@ void loop() {
       }
       #ifdef PIXELBLADE
         lightOn(currentColor, NUMPIXELS - 5, NUMPIXELS);
+        pixelAccentUpdate(currentColor);
       #else if STAR_LED
         //lightOn(currentColor, NUMPIXELS - 5, NUMPIXELS);
       #endif
@@ -1050,7 +1086,6 @@ void loop() {
 
     if (ActionModeSubStates == AS_RETRACTION) { // we just leaved Action Mode
       //detachInterrupt(0);
-
       SinglePlay_Sound(soundFont.getPowerOff());
       ActionModeSubStates = AS_HUM;
       changeMenu = false;
@@ -1079,7 +1114,6 @@ void loop() {
     if (PrevSaberState == S_CONFIG) { // we just leaved Config Mode
       saveConfig();
       PrevSaberState = S_STANDBY;
-
       /*
          RESET CONFIG
       */
@@ -1113,10 +1147,9 @@ void loop() {
 #else
     lightOff();
 #endif
-
-    accentLEDControl(AL_ON);
-
-
+    #ifdef ACCENT_LED
+      accentLEDControl(AL_ON);
+    #endif
 
   } // END STANDBY MODE
 #ifdef JUKEBOX
@@ -1158,7 +1191,8 @@ void loop() {
 #ifdef DEEP_SLEEP
   else if (SaberState == S_SLEEP) {
     if (PrevSaberState == S_CONFIG) { // just entered Sleep mode
-
+//      SinglePlay_Sound(20);
+//      delay(20);
       byte old_ADCSRA = ADCSRA;
       // disable ADC to save power
       // disable ADC
@@ -1167,16 +1201,26 @@ void loop() {
 
       // .. and the code will continue from here
 
-      ADCSRA = old_ADCSRA;   // re-enable ADC conversion
+
       SleepModeExit();
       SaberState = S_STANDBY;
+      StandbyTime = millis();
       PrevSaberState = S_SLEEP;
       // play boot sound
+      ADCSRA = old_ADCSRA;   // re-enable ADC conversion
       SinglePlay_Sound(11);
       delay(20);
     }
   }
+  #ifdef SLEEP_TIMER
+    if ( SaberState == S_SABERON || SaberState == S_CONFIG || SaberState == S_SLEEP || SaberState == S_JUKEBOX ) { StandbyTime = millis(); }
+    if ((millis() - StandbyTime) > SLEEP_TIMER) {
+      SaberState = S_SLEEP;
+      PrevSaberState = S_CONFIG;
+    }
+  #endif
 #endif // DEEP_SLEEP
+
 } //loop
 
 // ====================================================================================

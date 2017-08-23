@@ -179,7 +179,7 @@ void mainClick() {
             }
               lightOn(currentColor);
           #endif  // PIXELBLADE
-
+          pixelAccentUpdate(currentColor);
       delay(150);
       #if defined LS_INFO
               Serial.println(soundFont.getID());
@@ -333,7 +333,9 @@ void mainDoubleClick() {
       #endif
       HumRelaunch();
       ActionModeSubStates=AS_HUM;
-      accentLEDControl(AL_ON);
+      #ifdef ACCENT_LED
+        accentLEDControl(AL_ON);
+      #endif
     }    
 } else if (SaberState==S_CONFIG) {
 // Change Menu
@@ -359,6 +361,7 @@ void mainDoubleClick() {
             }
               lightOn(currentColor);
           #endif  // PIXELBLADE
+          pixelAccentUpdate(currentColor);
         delay(500);        
         break;
       case CS_SOUNDFONT:
@@ -411,6 +414,7 @@ void mainDoubleClick() {
             }
               lightOn(currentColor);
           #endif  // PIXELBLADE
+          pixelAccentUpdate(currentColor);
           delay(500);      
           break;
     #endif // DEEP_SLEEP
@@ -439,6 +443,7 @@ void mainDoubleClick() {
               }
                 lightOn(currentColor);
             #endif  // PIXELBLADE
+            pixelAccentUpdate(currentColor);
           delay(500);
         #endif // DEEP_SLEEP        
         break;
@@ -613,6 +618,7 @@ void mainLongPressStart() {
             }
               lightOn(currentColor);
           #endif  // PIXELBLADE
+          pixelAccentUpdate(currentColor);
         delay(500);        
         break;
       case CS_SOUNDFONT:
@@ -673,6 +679,7 @@ void mainLongPressStart() {
             }
               lightOn(currentColor);
           #endif  // PIXELBLADE
+          pixelAccentUpdate(currentColor);
           delay(500);      
         #endif  // DEEP_SLEEP
         break;
@@ -748,6 +755,7 @@ void mainLongPressStart() {
             }
               lightOn(currentColor);
           #endif  // PIXELBLADE
+          pixelAccentUpdate(currentColor);
           delay(500);      
           break;
       #endif // DEEP_SLEEP
@@ -910,6 +918,7 @@ void lockupClick() {
             }
               lightOn(currentColor);
           #endif  // PIXELBLADE
+          pixelAccentUpdate(currentColor);
 
       delay(150);
       #if defined LS_INFO

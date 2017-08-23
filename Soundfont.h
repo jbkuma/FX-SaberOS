@@ -23,13 +23,13 @@
 
 class SoundFont {
 
-#define SOUNDFONT_QUANTITY 4
-#define NR_CONFIGFOLDERFILES 19
-#define NR_JUKEBOXSONGS 2
-#define NR_SF1_FILES 26 
-#define NR_SF2_FILES 26 
-#define NR_SF3_FILES 26 
-#define NR_SF4_FILES 26 
+#define SOUNDFONT_QUANTITY    4
+#define NR_CONFIGFOLDERFILES  29
+#define NR_JUKEBOXSONGS       2
+#define NR_SF1_FILES          26 
+#define NR_SF2_FILES          26 
+#define NR_SF3_FILES          26 
+#define NR_SF4_FILES          26 
 
   public:
 

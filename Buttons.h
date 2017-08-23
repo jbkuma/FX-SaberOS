@@ -15,7 +15,7 @@
 /*
  * BUTTONS PARAMETERS
  ************************************/
-#define CLICK				200 //5    // ms you need to press a button to be a click
+#define CLICK				    200 //5    // ms you need to press a button to be a click
 #define PRESS_ACTION		600 //200  // ms you need to press a button to be a long press, in action mode
 #define PRESS_CONFIG		600 //400  // ms you need to press a button to be a long press, in config mode
 /************************************/

@@ -113,8 +113,13 @@ void JukeBox_Stroboscope(cRGB color);
 
 #endif
 
+#ifdef ACCENT_LED
 void accentLEDControl(AccentLedAction_En AccentLedAction);
+#endif
+
 void PWM();
 #endif /* LIGHT_H_ */
 
-
+#ifdef PIXEL_ACCENT
+void pixelAccentUpdate (cRGB thisAccentColor);
+#endif
